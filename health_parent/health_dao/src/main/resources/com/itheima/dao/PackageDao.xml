@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.dao.PackageDao">
+    <insert id="add" parameterType="Package">
+        <selectKey resultType="int" order="AFTER" keyProperty="id">
+            select last_insert_id()
+        </selectKey>
+        insert into t_package (name,code,helpCode,sex,age,price,remark,attention,img)
+        values (#{name},#{code},#{helpCode},#{sex},#{age},#{price},#{remark},#{attention},#{img})
+    </insert>
+
+    <insert id="addPackageAndCheckGroup" parameterType="int">
+        insert into t_package_checkgroup values (#{pkgId}, #{checkgroupId})
+    </insert>
+
+    <select id="findAll" resultType="Package">
+        select * from t_package
+    </select>
+    <select id="getPackageDetail" parameterType="int" resultMap="packageDetailResultMap">
+        select p.*,
+          cg.id as checkgroup_id, cg.name as checkgroup_name, cg.remark as checkgroup_remark,
+          tc.id as checkitem_id, tc.name as checkitem_name
+        from t_package p, t_checkgroup cg, t_checkitem tc, t_package_checkgroup tpc, t_checkgroup_checkitem tcc
+        where p.id=tpc.package_id and tpc.checkgroup_id=cg.id
+        and cg.id=tcc.checkgroup_id and tcc.checkitem_id=tc.id
+        and p.id=#{id}
+    </select>
+
+    <resultMap id="packageDetailResultMap" type="Package">
+        <!--套餐信息映射-->
+        <id property="id" column="id"/>
+        <result property="sex" column="sex"/>
+        <result property="name" column="name"/>
+        <result property="age" column="age"/>
+        <result property="remark" column="remark"/>
+        <result property="img" column="img"/>
+        <!--检查组映射1对多collection
+            ofType: 多的元素类型
+        -->
+        <collection property="checkGroups" ofType="CheckGroup" column="checkgroup_id">
+            <id property="id" column="checkgroup_id"/>
+            <result property="name" column="checkgroup_name"/>
+            <result property="remark" column="checkgroup_remark"/>
+            <!--检查项映射1对多collection jvt__$$sfda javasisst-->
+            <collection property="checkItems" ofType="CheckItem" column="checkitem_id">
+                <id property="id" column="checkitem_id"/>
+                <result property="name" column="checkitem_name"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="findById" parameterType="int" resultType="Package">
+        select * From t_package where id=#{id}
+    </select>
+
+    <select id="getPackageReport" resultType="Map">
+        select p.name,t.cnt value from (
+            select package_id,count(1) as cnt from t_order group by package_id
+        ) t, t_package p where t.package_id=p.id
+    </select>
+
+    <select id="findHotPackage" resultType="Map">
+        select p.name,t.cnt as count,t.cnt/g.total as proportion, p.remark
+        from (
+            select package_id,count(1) as cnt from t_order group by package_id order by cnt desc
+        ) t, t_package p, (
+            select count(1) total from t_order
+        ) g
+        where t.package_id=p.id limit 0,4
+    </select>
+</mapper>

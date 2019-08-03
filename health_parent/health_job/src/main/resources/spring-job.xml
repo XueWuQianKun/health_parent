@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    <!--任务类-->
+    <context:component-scan base-package="com.itheima.job"/>
+    <context:annotation-config></context:annotation-config>
+    <!--任务策略-->
+    <bean id="jobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <!--调用的是哪个任务类-->
+        <property name="targetObject" ref="cleanImgJob"/>
+        <!--调用的是任务类中的哪个方法-->
+        <property name="targetMethod" value="doJob"/>
+        <!--是否使用多线程来跑任务，false使用单线程-->
+        <property name="concurrent" value="false"/>
+    </bean>
+
+    <!--触发器-->
+    <bean id="trigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <!--七子表达式, 触发的时机，时间的表达式，跟当前的系统时间对比，如果匹配则触发-->
+        <!--秒 分 时 日 月 周 年-->
+        <property name="cronExpression" value="0/30 * * * * ? *"/>
+        <!--绑定触发时调用任务策略-->
+        <property name="jobDetail" ref="jobDetail"/>
+    </bean>
+
+    <!--任务调试器， 定时器，随着系统时间走-->
+    <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <!--关联的触发器-->
+        <property name="triggers">
+            <list>
+                <ref bean="trigger"/>
+            </list>
+        </property>
+    </bean>
+
+    <!--注入redis-->
+    <import resource="classpath:spring-redis.xml"/>
+
+</beans>
