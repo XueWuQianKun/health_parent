@@ -14,7 +14,7 @@ public class UserController {
 
     @GetMapping("/getLoginUsername")
     public Result getLoginUsername(){
-        // SecurityContextHolder, 存入上下文的内容，
+        // SecurityContextHolder, 存入上下文的内容，1111111
         // getAuthentication.getPrincipal() 获取认证信息userDetail
         //getAuthentication().getName(); 获取登陆的用户名
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
